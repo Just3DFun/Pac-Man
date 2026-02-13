@@ -21,34 +21,35 @@
       this.state = 'playing';
       this.camera = { x: 0, y: 0 };
       this.inputDir = { x: 0, y: 0 };
+      this.frightenedTimer = 0;
       this.resetLevel(false);
     }
 
     resetLevel(keepSeed = true) {
-      if (!keepSeed) {
-        this.seed = this.level <= 3 ? 12345 : this.seed + 1337;
-      }
+      if (!keepSeed) this.seed = this.level <= 3 ? 12345 : this.seed + 1337;
       this.rng = new U.RNG(this.seed);
       this.map = new PM.Map.GridMap(this.level, this.seed);
-      const spawns = this.map.spawnPoints;
-      const p0 = spawns[0] || this.map.randomWalkable();
+
+      const p0 = this.map.spawnPoints[0] || this.map.randomWalkablePacman();
       this.player = new PM.Entities.Player(p0.x, p0.y, 5.2);
 
       if (this.mode === 'ghost') {
-        const aiStart = spawns[1] || this.map.randomWalkable();
+        const aiStart = this.map.spawnPoints[1] || this.map.randomWalkablePacman();
         this.aiPacman = new PM.Entities.AIPacman(aiStart.x, aiStart.y, 4.8);
       } else {
         this.aiPacman = null;
       }
 
       const colours = ['#ff4f7a', '#67d8ff', '#ffb266', '#a98bff'];
+      const home = this.map.lair?.centre || this.map.randomWalkableGhost();
       this.ghosts = colours.map((colour, i) => {
-        const s = spawns[i + 1] || this.map.randomWalkable();
-        return new PM.Entities.Ghost(s.x, s.y, this.baseGhostSpeed, colour);
+        const offset = { x: home.x + ((i % 2) ? 1 : -1), y: home.y + (i < 2 ? 0 : 1) };
+        const spawn = this.map.isWalkable(offset.x, offset.y, true) ? offset : home;
+        return new PM.Entities.Ghost(spawn.x, spawn.y, this.baseGhostSpeed, colour, home);
       });
-      if (this.mode === 'ghost') {
-        this.controlledGhost = this.ghosts[0];
-      }
+      if (this.mode === 'ghost') this.controlledGhost = this.ghosts[0];
+
+      this.frightenedTimer = 0;
     }
 
     nextLevel() {
@@ -64,8 +65,14 @@
       this.inputDir = dir;
     }
 
+    triggerFrightenedMode() {
+      this.frightenedTimer = 7;
+    }
+
     update(dt) {
       if (this.state !== 'playing') return;
+      if (this.frightenedTimer > 0) this.frightenedTimer -= dt;
+
       const targetPlayer = this.mode === 'pacman' ? this.player : this.aiPacman;
 
       if (this.mode === 'pacman') {
@@ -96,10 +103,7 @@
     }
 
     worldToScreen(wx, wy) {
-      return {
-        x: (wx - this.camera.x) * this.tileSize,
-        y: (wy - this.camera.y) * this.tileSize
-      };
+      return { x: (wx - this.camera.x) * this.tileSize, y: (wy - this.camera.y) * this.tileSize };
     }
 
     draw(t) {
@@ -117,20 +121,26 @@
       const y0 = Math.floor(this.camera.y);
       const x1 = Math.ceil(this.camera.x + this.canvas.width / this.tileSize);
       const y1 = Math.ceil(this.camera.y + this.canvas.height / this.tileSize);
+
       for (let y = y0; y <= y1; y += 1) {
         for (let x = x0; x <= x1; x += 1) {
           const tile = this.map.tiles[y]?.[x];
           if (tile == null) continue;
           const s = this.worldToScreen(x, y);
+
           if (tile === PM.Map.TILE.WALL) {
             ctx.fillStyle = '#0d1726';
             ctx.fillRect(s.x, s.y, this.tileSize, this.tileSize);
             ctx.strokeStyle = 'rgba(97,177,255,0.25)';
             ctx.strokeRect(s.x + 1, s.y + 1, this.tileSize - 2, this.tileSize - 2);
+          } else if (tile === PM.Map.TILE.LAIR || tile === PM.Map.TILE.LAIR_DOOR) {
+            ctx.fillStyle = tile === PM.Map.TILE.LAIR ? '#261322' : '#663a3a';
+            ctx.fillRect(s.x, s.y, this.tileSize, this.tileSize);
           } else {
             ctx.fillStyle = '#142338';
             ctx.fillRect(s.x, s.y, this.tileSize, this.tileSize);
           }
+
           if (tile === PM.Map.TILE.PELLET || tile === PM.Map.TILE.ENERGISER) {
             ctx.fillStyle = '#b6f0ff';
             const pulse = tile === PM.Map.TILE.ENERGISER ? (3 + Math.sin(t * 0.01) * 1.4) : 2;
@@ -148,8 +158,7 @@
       const mouth = moving ? (Math.sin(t * 0.02) * 0.3 + 0.5) : 0.2;
       const angle = Math.atan2(ent.facing.y, ent.facing.x);
       ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.translate(this.tileSize / 2, this.tileSize / 2);
+      ctx.translate(p.x + this.tileSize / 2, p.y + this.tileSize / 2);
       ctx.rotate(angle);
       ctx.fillStyle = ms ? '#ff84bf' : '#ffd94d';
       ctx.beginPath();
@@ -170,7 +179,7 @@
       const s = this.tileSize;
       ctx.save();
       ctx.globalAlpha = 0.86;
-      ctx.fillStyle = g.colour;
+      ctx.fillStyle = g.isEaten ? '#d9d9ff' : (g.isFrightened ? '#4d77ff' : g.colour);
       ctx.beginPath();
       ctx.arc(p.x + s / 2, p.y + s * 0.45, s * 0.35, Math.PI, 0);
       ctx.lineTo(p.x + s * 0.85, p.y + s * 0.82);
@@ -186,11 +195,20 @@
     checkPacmanWinLose() {
       if (this.map.pelletsRemaining <= 0) {
         this.nextLevel();
+        return;
       }
+
       for (const g of this.ghosts) {
+        if (g.isEaten) continue;
         if (U.dist(this.player, g) < 0.55) {
-          this.state = 'lose';
-          this.running = false;
+          if (this.frightenedTimer > 0) {
+            g.isEaten = true;
+            g.state = PM.AI.GHOST_STATE.RETURN;
+          } else {
+            this.state = 'lose';
+            this.running = false;
+            return;
+          }
         }
       }
     }
@@ -213,24 +231,31 @@
     }
 
     distanceToNearestPellet(from) {
-      const path = U.bfs(from, (n) => {
-        const t = this.map.tiles[n.y][n.x];
-        return t === PM.Map.TILE.PELLET || t === PM.Map.TILE.ENERGISER;
-      }, (n) => this.map.neighbours(n));
+      const path = U.bfs(
+        from,
+        (n) => {
+          const t = this.map.tiles[n.y][n.x];
+          return t === PM.Map.TILE.PELLET || t === PM.Map.TILE.ENERGISER;
+        },
+        (n) => this.map.neighboursFor(n, false)
+      );
       return path ? path.length : 999;
     }
 
     predictPlayerTile(player) {
       const t = player.tile();
-      return { x: t.x + player.facing.x * 2, y: t.y + player.facing.y * 2 };
+      return {
+        x: U.clamp(t.x + player.facing.x * 2, 0, this.map.width - 1),
+        y: U.clamp(t.y + player.facing.y * 2, 0, this.map.height - 1)
+      };
     }
 
     findSafeTeleport() {
       const options = [];
       for (let y = 1; y < this.map.height - 1; y += 1) {
         for (let x = 1; x < this.map.width - 1; x += 1) {
-          if (!this.map.isWalkable(x, y)) continue;
-          const exits = this.map.neighbours({ x, y }).length;
+          if (!this.map.isWalkable(x, y, false)) continue;
+          const exits = this.map.neighboursFor({ x, y }, false).length;
           if (exits < 2) continue;
           const close = this.ghosts.some((g) => U.dist(g.tile(), { x, y }) < 4);
           if (!close) options.push({ x, y });
@@ -249,7 +274,7 @@
         x += dir.x;
         y += dir.y;
       }
-      if (this.map.isWalkable(x, y)) {
+      if (this.map.isWalkable(x, y, false)) {
         player.x = x;
         player.y = y;
       }

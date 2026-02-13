@@ -34,7 +34,8 @@ label {
   gap: 4px;
 }
 
-select, button {
+select,
+button {
   background: #101724;
   color: #e8f0ff;
   border: 1px solid #3f628f;
@@ -56,7 +57,9 @@ button:hover {
 }
 
 #gameShell {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 #gameCanvas {
@@ -65,12 +68,11 @@ button:hover {
 }
 
 .hud {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  padding: 8px;
+  position: static;
   font-size: 14px;
-  background: rgba(12, 18, 30, 0.78);
+  padding: 10px;
+  background: rgba(12, 18, 30, 0.88);
+  max-width: 420px;
 }
 
 .hidden {

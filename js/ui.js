@@ -9,7 +9,8 @@
       `Level: ${game.level}`,
       `Difficulty: ${game.difficulty}`,
       `Pellets: ${game.map.pelletsRemaining}`,
-      `Ability: ${p?.ability || 'None'}${p?.silent ? ` (${p.abilityTimer.toFixed(1)}s)` : ''}`
+      `Ability: ${p?.ability || 'None'}${p?.silent ? ` (${p.abilityTimer.toFixed(1)}s)` : ''}` ,
+      `Frightened: ${Math.max(0, game.frightenedTimer).toFixed(1)}s`
     ].join('<br>');
   }
 
@@ -40,6 +41,7 @@
         const t = game.map.tiles[ty]?.[tx];
         if (t == null) continue;
         if (t === PM.Map.TILE.WALL) ctx.fillStyle = '#13243a';
+        else if (t === PM.Map.TILE.LAIR || t === PM.Map.TILE.LAIR_DOOR) ctx.fillStyle = '#3f2b36';
         else ctx.fillStyle = '#1b3553';
         ctx.fillRect(x * tilePx, y * tilePx, tilePx, tilePx);
         if (t === PM.Map.TILE.PELLET || t === PM.Map.TILE.ENERGISER) {
@@ -103,7 +105,7 @@
       `Difficulty: ${game.difficulty}`,
       `Pellets: ${game.map.pelletsRemaining}`,
       `Ability: ${game.player?.ability || 'none'} ${game.player?.silent ? game.player.abilityTimer.toFixed(1) : ''}`,
-      `Ghost states: ${game.ghosts.map((g) => g.state).join(', ')}`
+      `Ghost states: ${game.ghosts.map((g) => `${g.state}${g.isEaten ? '(eaten)' : g.isFrightened ? '(fright)' : ''}`).join(', ')}`
     ];
     lines.forEach((l, i) => ctx.fillText(l, 18, ctx.canvas.height - 128 + i * 16));
 

@@ -7,7 +7,8 @@
     PATROL: 'PATROL',
     INVESTIGATE: 'INVESTIGATE',
     CHASE: 'CHASE',
-    SEARCH: 'SEARCH'
+    SEARCH: 'SEARCH',
+    RETURN: 'RETURN'
   };
 
   const DIFFICULTY = {
@@ -28,7 +29,7 @@
     while (x !== to.x || y !== to.y) {
       x += sx;
       y += sy;
-      if (!map.isWalkable(x, y)) return false;
+      if (!map.isWalkable(x, y, false)) return false;
     }
     return true;
   }
@@ -42,8 +43,8 @@
     return ang <= cone * 0.5;
   }
 
-  function pathTo(map, start, goal) {
-    return U.bfs(start, (n) => n.x === goal.x && n.y === goal.y, (n) => map.neighbours(n));
+  function pathTo(map, start, goal, allowLair = false) {
+    return U.bfs(start, (n) => n.x === goal.x && n.y === goal.y, (n) => map.neighboursFor(n, allowLair));
   }
 
   PM.AI = { GHOST_STATE, DIFFICULTY, hasLineOfSight, withinCone, pathTo };
