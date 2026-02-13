@@ -20,7 +20,7 @@
     }
 
     atCentre() {
-      return Math.abs(this.x - Math.round(this.x)) < 0.01 && Math.abs(this.y - Math.round(this.y)) < 0.01;
+      return Math.abs(this.x - Math.round(this.x)) < 0.05 && Math.abs(this.y - Math.round(this.y)) < 0.05;
     }
 
     canMove(map, dir) {
