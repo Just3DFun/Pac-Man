@@ -20,7 +20,7 @@
     }
 
     atCentre() {
-      return Math.abs(this.x - Math.round(this.x)) < 0.08 && Math.abs(this.y - Math.round(this.y)) < 0.08;
+      return Math.abs(this.x - Math.round(this.x)) < 0.01 && Math.abs(this.y - Math.round(this.y)) < 0.01;
     }
 
     canMove(map, dir) {
@@ -193,9 +193,13 @@
             this.patrolTarget = options.length ? game.rng.pick(options) : game.rng.pick(game.map.spawnPoints);
           }
           this.path = PM.AI.pathTo(game.map, myTile, this.patrolTarget, true) || [];
+          if (this.path.length > 1) {
+            const n = this.path[1];
+            this.nextDir = { x: n.x - myTile.x, y: n.y - myTile.y };
+          }
         }
 
-        if (this.path.length > 1 && this.atCentre() && !this.isFrightened) {
+        if (this.path.length > 1 && this.atCentre() && !this.isFrightened && this.state !== GHOST_STATE.PATROL) {
           const n = this.path[1];
           this.nextDir = { x: n.x - myTile.x, y: n.y - myTile.y };
         }
