@@ -1,0 +1,78 @@
+:root {
+  color-scheme: dark;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #05070b;
+  color: #dfe8ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.panel {
+  background: rgba(15, 19, 28, 0.95);
+  border: 1px solid #2f4f7a;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 0 18px rgba(100, 200, 255, 0.25);
+}
+
+#menu {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+select, button {
+  background: #101724;
+  color: #e8f0ff;
+  border: 1px solid #3f628f;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  background: #173152;
+}
+
+.help {
+  font-size: 0.9rem;
+  color: #bad0ff;
+}
+
+#gameShell {
+  position: relative;
+}
+
+#gameCanvas {
+  border: 1px solid #375983;
+  background: #03060a;
+}
+
+.hud {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 8px;
+  font-size: 14px;
+  background: rgba(12, 18, 30, 0.78);
+}
+
+.hidden {
+  display: none !important;
+}

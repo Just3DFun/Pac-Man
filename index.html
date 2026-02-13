@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pac-Man Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="menu" class="panel">
+    <h1>Pac-Man Gameplay Prototype</h1>
+
+    <label>Mode
+      <select id="modeSelect">
+        <option value="pacman">Play as Pac-Man</option>
+        <option value="ghost">Play as Ghost (AI Pac-Man)</option>
+      </select>
+    </label>
+
+    <label>Character
+      <select id="characterSelect">
+        <option value="pacman">Pac-Man</option>
+        <option value="mspacman">Ms. Pac-Man</option>
+      </select>
+    </label>
+
+    <label>Difficulty
+      <select id="difficultySelect">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="terror">Terror</option>
+      </select>
+    </label>
+
+    <button id="startBtn">Start</button>
+
+    <section class="help">
+      <h2>Controls</h2>
+      <p>WASD / Arrow keys: Move</p>
+      <p>Space: Activate ability</p>
+      <p>Esc: Return to menu</p>
+      <p>F1: Toggle debug</p>
+      <p>N: Next level, R: Restart level seed, 1-4: Difficulty</p>
+    </section>
+  </div>
+
+  <div id="gameShell" class="hidden">
+    <canvas id="gameCanvas" width="960" height="640"></canvas>
+    <div id="hud" class="panel hud"></div>
+  </div>
+
+  <script src="js/util.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
